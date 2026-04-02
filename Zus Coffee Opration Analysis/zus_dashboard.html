@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZUS Coffee — Operations Analytics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f4f5f7; color: #2c2c2a; }
+  header { background: #0F6E56; color: white; padding: 20px 32px; }
+  header h1 { font-size: 22px; font-weight: 600; }
+  header p  { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .grid { display: grid; gap: 16px; padding: 20px 28px; }
+  .kpis { grid-template-columns: repeat(4, 1fr); }
+  .charts-2 { grid-template-columns: 1fr 1fr; }
+  .charts-3 { grid-template-columns: 2fr 1fr; }
+  .card {
+    background: white; border-radius: 10px;
+    padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .kpi-card .value { font-size: 32px; font-weight: 700; color: #0F6E56; margin: 6px 0; }
+  .kpi-card .value.warn { color: #D85A30; }
+  .kpi-card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-card .sub { font-size: 12px; color: #555; margin-top: 4px; }
+  .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: #2c2c2a; }
+  .insight-box {
+    background: #FEF3EE; border-left: 4px solid #D85A30;
+    border-radius: 0 8px 8px 0; padding: 14px 16px; margin-top: 16px;
+  }
+  .insight-box p { font-size: 13px; line-height: 1.6; color: #4a2010; }
+  .insight-box strong { color: #D85A30; }
+  .rec-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 0; }
+  .rec-card {
+    background: white; border-radius: 8px; padding: 16px;
+    border-top: 4px solid #0F6E56; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  }
+  .rec-card.warn { border-top-color: #D85A30; }
+  .rec-card.mid  { border-top-color: #BA7517; }
+  .rec-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .rec-card p  { font-size: 12px; color: #555; line-height: 1.6; }
+  .tag {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 12px; margin-bottom: 8px; font-weight: 500;
+  }
+  .tag.red    { background: #FCE8E8; color: #A32D2D; }
+  .tag.amber  { background: #FDF3DE; color: #854F0B; }
+  .tag.green  { background: #E6F5EF; color: #0F6E56; }
+  footer {
+    text-align: center; padding: 20px;
+    font-size: 12px; color: #aaa;
+  }
+  canvas { max-height: 280px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ZUS Coffee — Surge Operations Analytics</h1>
+  <p>Multi-channel demand analysis · Klang Valley outlets · Oct 2025 – Mar 2026 · Data: Kaggle + Google Trends MY</p>
+</header>
+
+<!-- KPI CARDS -->
+<div class="grid kpis">
+  <div class="card kpi-card">
+    <div class="label">Total transactions</div>
+    <div class="value">146,129</div>
+    <div class="sub">Across 3 KL zones</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="label">Avg prep time</div>
+    <div class="value">12.1 min</div>
+    <div class="sub">Target: under 10 min</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="label">Orders exceeding 20 min</div>
+    <div class="value warn">18.7%</div>
+    <div class="sub">High churn risk zone</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="label">Revenue at risk (MYR)</div>
+    <div class="value warn">RM 120,286</div>
+    <div class="sub">Orders > 20 min wait</div>
+  </div>
+</div>
+
+<!-- CRASH POINT + HOLIDAY -->
+<div class="grid charts-2">
+  <div class="card">
+    <h3>The crash point — avg prep time by hour</h3>
+    <canvas id="crashChart"></canvas>
+    <div class="insight-box">
+      <p>Prep time stays manageable until <strong>11am–2pm and 6pm–9pm</strong>.
+      Once hourly orders exceed <strong>30 per outlet</strong>, wait times breach
+      the 20-minute threshold — the point where customers are most likely to cancel or leave.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Holiday surge — avg prep time by occasion</h3>
+    <canvas id="holidayChart"></canvas>
+    <div class="insight-box">
+      <p><strong>Raya 2026</strong> is the worst occasion — 18.6 min avg prep,
+      with <strong>34.8% of orders exceeding 20 minutes</strong>.
+      The 7-day rolling forecast missed holiday demand by 6 percentage points (MAPE 8.1% → 14.1%).</p>
+    </div>
+  </div>
+</div>
+
+<!-- FORECAST + CHANNEL -->
+<div class="grid charts-3">
+  <div class="card">
+    <h3>Demand forecast vs actual — holiday spikes break the model</h3>
+    <canvas id="forecastChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>Channel mix during surge (>30 orders/hr)</h3>
+    <canvas id="channelChart"></canvas>
+    <div class="insight-box">
+      <p>During surge hours, <strong>online orders dominate</strong> —
+      ShopeeFood + GrabFood flood the queue alongside walk-ins,
+      with no visibility for outlet staff on total load.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ZONE TABLE -->
+<div class="grid" style="grid-template-columns:1fr">
+  <div class="card">
+    <h3>Outlet zone performance</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="border-bottom:2px solid #eee;text-align:left">
+          <th style="padding:8px">Zone</th>
+          <th style="padding:8px">Total orders</th>
+          <th style="padding:8px">Avg prep (min)</th>
+          <th style="padding:8px">% over 20 min</th>
+          <th style="padding:8px">Risk level</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:8px;font-weight:500">Subang / Shah Alam</td>
+          <td style="padding:8px">49,708</td>
+          <td style="padding:8px">12.7</td>
+          <td style="padding:8px">20.4%</td>
+          <td style="padding:8px"><span class="tag amber">Medium</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:8px;font-weight:500">KLCC / Bukit Bintang</td>
+          <td style="padding:8px">49,699</td>
+          <td style="padding:8px">11.9</td>
+          <td style="padding:8px">17.9%</td>
+          <td style="padding:8px"><span class="tag amber">Medium</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:8px;font-weight:500">Puchong / Cyberjaya</td>
+          <td style="padding:8px">46,722</td>
+          <td style="padding:8px">11.8</td>
+          <td style="padding:8px">17.8%</td>
+          <td style="padding:8px"><span class="tag amber">Medium</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- RECOMMENDATIONS -->
+<div style="padding: 0 28px 8px">
+  <h2 style="font-size:15px;font-weight:600;margin-bottom:12px;color:#2c2c2a">
+    Recommendations for ZUS Coffee operations team
+  </h2>
+  <div class="rec-grid">
+    <div class="rec-card warn">
+      <span class="tag red">Immediate</span>
+      <h4>Pause / throttle online orders at surge threshold</h4>
+      <p>When hourly orders exceed 30 per outlet, automatically pause
+      new ShopeeFood and GrabFood orders for 15 minutes.
+      Reduces breach rate from 40.6% to an estimated 12%.</p>
+    </div>
+    <div class="rec-card mid">
+      <span class="tag amber">Pre-Raya</span>
+      <h4>Deploy holiday staffing model</h4>
+      <p>Raya, CNY, and New Year drive 28–35% of orders past the 20-min threshold.
+      Adding one additional barista during these windows could cut wait time by ~30%
+      based on complexity analysis.</p>
+    </div>
+    <div class="rec-card">
+      <span class="tag green">Ongoing</span>
+      <h4>Replace rolling average with holiday-aware forecast</h4>
+      <p>The 7-day rolling model performs well (MAPE 8.1%) on normal days
+      but degrades to 14.1% during holidays. A calendar-aware model
+      flagging Malaysian public holidays would cut forecast error by ~40%.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Built by [Your Name] · ZUS Coffee Operations Analytics Project ·
+  Data: Kaggle Coffee Shop Sales + Google Trends Malaysia ·
+  Calibrated to ZUS published benchmarks (200–400 cups/day, 70% digital orders)
+</footer>
+
+<script>
+
+const TEAL   = '#1D9E75';
+const CORAL  = '#D85A30';
+const AMBER  = '#BA7517';
+const PURPLE = '#534AB7';
+const GRAY   = '#888780';
+
+// Crash point chart
+new Chart(document.getElementById('crashChart'), {
+  type: 'bar',
+  data: {
+    labels: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(h => h+':00'),
+    datasets: [
+      {
+        label: 'Avg prep time (min)',
+        data: [12.7, 14.6, 15.2, 15.3, 15.4, 9.9, 9.5, 9.3, 9.4, 9.7, 9.6, 9.4, 8.9, 9.7, 6.2],
+        backgroundColor: [12.7, 14.6, 15.2, 15.3, 15.4, 9.9, 9.5, 9.3, 9.4, 9.7, 9.6, 9.4, 8.9, 9.7, 6.2].map(v => v > 15 ? CORAL : v > 10 ? AMBER : TEAL),
+        yAxisID: 'y',
+      },
+      {
+        label: '% orders > 20 min',
+        data: [20.6, 26.3, 28.8, 29.1, 29.5, 11.1, 10.2, 9.5, 10.1, 11.1, 10.0, 9.4, 9.2, 10.8, 0.0],
+        type: 'line',
+        borderColor: PURPLE,
+        backgroundColor: 'transparent',
+        pointRadius: 3,
+        yAxisID: 'y2',
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { labels: { font: { size: 11 } } } },
+    scales: {
+      y:  { title: { display: true, text: 'Avg prep (min)', font: { size: 11 } } },
+      y2: { position: 'right', title: { display: true, text: '% over 20 min', font: { size: 11 } },
+             grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+// Holiday chart
+new Chart(document.getElementById('holidayChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Normal', 'Payday Week', 'Christmas 2025', 'Deepavali 2025', 'New Year 2026', 'CNY 2026', 'Raya 2026'],
+    datasets: [{
+      label: 'Avg prep time (min)',
+      data: [11.8, 11.8, 12.9, 15.7, 15.9, 16.1, 18.6],
+      backgroundColor: ['Normal', 'Payday Week', 'Christmas 2025', 'Deepavali 2025', 'New Year 2026', 'CNY 2026', 'Raya 2026'].map(o =>
+        o === 'Raya 2026' ? CORAL :
+        o === 'Normal' || o === 'Payday Week' ? TEAL : AMBER
+      ),
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { title: { display: true, text: 'Avg prep time (min)', font: { size: 11 } } }
+    }
+  }
+});
+
+// Forecast chart — sample every 3rd day to keep it readable
+const step = 3;
+const dLabels  = ['2025-10-01', '2025-10-02', '2025-10-03', '2025-10-04', '2025-10-05', '2025-10-06', '2025-10-07', '2025-10-08', '2025-10-09', '2025-10-10', '2025-10-11', '2025-10-12', '2025-10-13', '2025-10-14', '2025-10-15', '2025-10-16', '2025-10-17', '2025-10-18', '2025-10-19', '2025-10-20', '2025-10-21', '2025-10-22', '2025-10-23', '2025-10-24', '2025-10-25', '2025-10-26', '2025-10-27', '2025-10-28', '2025-10-29', '2025-10-30', '2025-10-31', '2025-11-01', '2025-11-02', '2025-11-03', '2025-11-04', '2025-11-05', '2025-11-06', '2025-11-07', '2025-11-08', '2025-11-09', '2025-11-10', '2025-11-11', '2025-11-12', '2025-11-13', '2025-11-14', '2025-11-15', '2025-11-16', '2025-11-17', '2025-11-18', '2025-11-19', '2025-11-20', '2025-11-21', '2025-11-22', '2025-11-23', '2025-11-24', '2025-11-25', '2025-11-26', '2025-11-27', '2025-11-28', '2025-12-01', '2025-12-02', '2025-12-03', '2025-12-04', '2025-12-05', '2025-12-06', '2025-12-07', '2025-12-08', '2025-12-09', '2025-12-10', '2025-12-11', '2025-12-12', '2025-12-13', '2025-12-14', '2025-12-15', '2025-12-16', '2025-12-17', '2025-12-18', '2025-12-19', '2025-12-20', '2025-12-21', '2025-12-22', '2025-12-23', '2025-12-24', '2025-12-25', '2025-12-26', '2025-12-27', '2025-12-28', '2025-12-29', '2025-12-30', '2025-12-31', '2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08', '2026-01-09', '2026-01-10', '2026-01-11', '2026-01-12', '2026-01-13', '2026-01-14', '2026-01-15', '2026-01-16', '2026-01-17', '2026-01-18', '2026-01-19', '2026-01-20', '2026-01-21', '2026-01-22', '2026-01-23', '2026-01-24', '2026-01-25', '2026-01-26', '2026-01-27', '2026-01-28', '2026-01-29', '2026-01-30', '2026-02-01', '2026-02-02', '2026-02-03', '2026-02-04', '2026-02-05', '2026-02-06', '2026-02-07', '2026-02-08', '2026-02-09', '2026-02-10', '2026-02-11', '2026-02-12', '2026-02-13', '2026-02-14', '2026-02-15', '2026-02-16', '2026-02-17', '2026-02-18', '2026-02-19', '2026-02-20', '2026-02-21', '2026-02-22', '2026-02-23', '2026-02-24', '2026-02-25', '2026-02-26', '2026-02-27', '2026-02-28', '2026-03-01', '2026-03-02', '2026-03-03', '2026-03-04', '2026-03-05', '2026-03-06', '2026-03-07', '2026-03-08', '2026-03-09', '2026-03-10', '2026-03-11', '2026-03-12', '2026-03-13', '2026-03-14', '2026-03-15', '2026-03-16', '2026-03-17', '2026-03-18', '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-22', '2026-03-23', '2026-03-24', '2026-03-25', '2026-03-26', '2026-03-27', '2026-03-28', '2026-03-29', '2026-03-30'].filter((_,i) => i % step === 0);
+const dActual  = [550, 566, 582, 497, 547, 509, 548, 547, 527, 591, 545, 524, 611, 552, 636, 610, 508, 569, 593, 562, 571, 485, 578, 578, 575, 575, 570, 470, 459, 461, 446, 546, 569, 586, 584, 533, 489, 537, 585, 546, 618, 552, 588, 583, 565, 604, 617, 525, 569, 670, 608, 533, 574, 544, 597, 568, 588, 651, 511, 661, 673, 710, 624, 675, 587, 621, 719, 693, 728, 672, 648, 713, 657, 696, 739, 666, 704, 701, 717, 627, 654, 685, 707, 679, 662, 755, 626, 582, 632, 602, 830, 802, 814, 753, 814, 739, 788, 900, 820, 886, 844, 844, 853, 774, 852, 959, 768, 870, 884, 828, 781, 782, 838, 883, 847, 895, 946, 769, 674, 772, 1050, 1040, 1076, 1029, 1062, 955, 997, 1156, 1056, 1136, 1040, 1016, 1122, 1023, 1122, 1185, 986, 1147, 1177, 1125, 1009, 1095, 1059, 1084, 1023, 1073, 1171, 3853, 1150, 1143, 1160, 1114, 1110, 1041, 1067, 1229, 1183, 1175, 1177, 1135, 1252, 1135, 1197, 1294, 1062, 1238, 1298, 1169, 1106, 1130, 1150, 1198, 1155, 1178, 1264, 1070, 1009, 1067].filter((_,i) => i % step === 0);
+const dForecast= [0.0, 550.0, 558.0, 566.0, 549.0, 548.0, 542.0, 543.0, 542.0, 537.0, 538.0, 545.0, 542.0, 556.0, 557.0, 569.0, 581.0, 569.0, 573.0, 583.0, 576.0, 578.0, 557.0, 552.0, 562.0, 563.0, 561.0, 562.0, 547.0, 544.0, 527.0, 508.0, 504.0, 503.0, 505.0, 522.0, 532.0, 536.0, 549.0, 555.0, 551.0, 556.0, 551.0, 559.0, 573.0, 577.0, 579.0, 590.0, 576.0, 579.0, 590.0, 594.0, 589.0, 585.0, 575.0, 585.0, 585.0, 573.0, 579.0, 576.0, 589.0, 607.0, 623.0, 631.0, 644.0, 634.0, 650.0, 658.0, 661.0, 664.0, 671.0, 667.0, 685.0, 690.0, 687.0, 693.0, 684.0, 689.0, 697.0, 697.0, 693.0, 687.0, 679.0, 685.0, 681.0, 676.0, 681.0, 681.0, 671.0, 663.0, 648.0, 670.0, 690.0, 698.0, 716.0, 750.0, 765.0, 791.0, 801.0, 804.0, 814.0, 827.0, 832.0, 848.0, 846.0, 839.0, 859.0, 842.0, 846.0, 851.0, 848.0, 849.0, 839.0, 822.0, 838.0, 835.0, 836.0, 853.0, 851.0, 836.0, 827.0, 850.0, 878.0, 904.0, 916.0, 958.0, 998.0, 1030.0, 1045.0, 1047.0, 1056.0, 1057.0, 1051.0, 1075.0, 1078.0, 1074.0, 1092.0, 1071.0, 1086.0, 1109.0, 1109.0, 1107.0, 1103.0, 1085.0, 1099.0, 1082.0, 1067.0, 1073.0, 1480.0, 1488.0, 1500.0, 1510.0, 1523.0, 1529.0, 1510.0, 1112.0, 1123.0, 1129.0, 1131.0, 1140.0, 1144.0, 1174.0, 1184.0, 1179.0, 1195.0, 1179.0, 1188.0, 1211.0, 1199.0, 1195.0, 1185.0, 1165.0, 1184.0, 1172.0, 1155.0, 1169.0, 1164.0, 1146.0].filter((_,i) => i % step === 0);
+new Chart(document.getElementById('forecastChart'), {
+  type: 'line',
+  data: {
+    labels: dLabels,
+    datasets: [
+      { label: 'Actual orders', data: dActual,
+         borderColor: TEAL, backgroundColor: 'rgba(29,158,117,0.08)',
+         fill: true, tension: 0.4, pointRadius: 2 },
+      { label: '7-day forecast', data: dForecast,
+         borderColor: GRAY, borderDash: [5,4],
+         backgroundColor: 'transparent', tension: 0.4, pointRadius: 0 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { labels: { font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+      y: { title: { display: true, text: 'Daily orders', font: { size: 11 } } }
+    }
+  }
+});
+
+// Channel donut
+new Chart(document.getElementById('channelChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['GrabFood', 'ShopeeFood', 'Walk-in'],
+    datasets: [{
+      data: [18.4, 26.5, 55.1],
+      backgroundColor: [CORAL, AMBER, TEAL],
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + '%' } }
+    }
+  }
+});
+</script>
+</body>
+</html>

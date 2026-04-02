@@ -1,0 +1,44 @@
+outlet_zone,hour,total_orders,avg_prep_mins,avg_hourly_volume
+KLCC / Bukit Bintang,8,6766,15.8,50.3
+KLCC / Bukit Bintang,10,6727,15.6,51.7
+KLCC / Bukit Bintang,9,6622,15.6,50.6
+KLCC / Bukit Bintang,11,3527,10.3,26.0
+KLCC / Bukit Bintang,7,3343,14.8,40.7
+KLCC / Bukit Bintang,17,2774,9.2,21.3
+KLCC / Bukit Bintang,14,2719,8.7,20.8
+KLCC / Bukit Bintang,16,2643,8.4,21.3
+KLCC / Bukit Bintang,18,2580,8.4,19.1
+KLCC / Bukit Bintang,13,2580,8.3,19.6
+KLCC / Bukit Bintang,15,2471,7.8,18.7
+KLCC / Bukit Bintang,12,2410,7.8,18.2
+KLCC / Bukit Bintang,19,2380,7.5,17.5
+KLCC / Bukit Bintang,6,1649,8.8,20.9
+KLCC / Bukit Bintang,20,508,6.6,15.3
+Puchong / Cyberjaya,10,6134,15.0,43.5
+Puchong / Cyberjaya,9,5771,14.8,39.8
+Puchong / Cyberjaya,7,5650,14.5,39.6
+Puchong / Cyberjaya,8,5648,14.6,39.7
+Puchong / Cyberjaya,15,2981,9.4,23.2
+Puchong / Cyberjaya,6,2836,15.1,37.4
+Puchong / Cyberjaya,14,2813,8.8,22.3
+Puchong / Cyberjaya,12,2778,8.2,19.6
+Puchong / Cyberjaya,16,2750,8.5,21.8
+Puchong / Cyberjaya,11,2702,8.1,19.5
+Puchong / Cyberjaya,13,2565,7.9,20.5
+Puchong / Cyberjaya,17,2505,8.2,20.8
+Puchong / Cyberjaya,18,1399,4.8,11.1
+Puchong / Cyberjaya,19,115,4.7,9.7
+Puchong / Cyberjaya,20,75,3.5,6.5
+Subang / Shah Alam,10,5156,15.6,47.6
+Subang / Shah Alam,9,4953,15.5,46.1
+Subang / Shah Alam,8,4815,15.1,43.7
+Subang / Shah Alam,7,4093,14.6,41.3
+Subang / Shah Alam,16,3561,11.4,28.8
+Subang / Shah Alam,19,3483,11.4,27.6
+Subang / Shah Alam,12,3421,11.9,29.6
+Subang / Shah Alam,18,3419,10.9,27.1
+Subang / Shah Alam,13,3418,10.9,26.8
+Subang / Shah Alam,11,3393,10.8,27.4
+Subang / Shah Alam,15,3376,11.4,28.0
+Subang / Shah Alam,17,3348,10.5,26.0
+Subang / Shah Alam,14,3272,10.7,25.6
